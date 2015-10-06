@@ -4436,12 +4436,31 @@ void SubBytes(){	// Remplace chaque octet State[x] par SBox[x]
 	
 };
 void ShiftRows(){
-	uchar sState[16];
-	int i;
-
-	for (i = 1; i < 16; i++) {
-		sState[i] = State[i];
+	int dimension = 4;
+	uchar before[dimension][dimension]; after[dimension][dimension];
+	int i, j;
+	// Remplir before
+	int variable = 0;
+	for (i = 0; i < dimension; i++) {
+		for (j = 0; j < dimension; j++) {
+			before[i][j] = State[variable];
+			variable ++;
+		}
 	}
+	// Traiter
+	for (i = 0; i < dimension; i++) {
+		for (j = 0; j < dimension; j++) {
+			after[i][j] = before[i][(i+j)%dimension];
+		}
+	}
+	// Remplir State
+	variable = 0;
+	for (i = 0; i < dimension; i++) {
+		for (j = 0; j < dimension; j++) {
+			State[variable] = after[i][j];
+		}
+	}
+	/*
 	State[1] = sState[5];
 	State[2] = sState[10];
 	State[3] = sState[15];
@@ -4454,12 +4473,22 @@ void ShiftRows(){
 	State[13] = sState[1];
 	State[14] = sState[6];
 	State[15] = sState[11];
-
+	*/
 };
 void MixColumns(){
+	uchar ref[16] = {
+		0x02, 0x03, 0x01, 0x01,
+		0x01, 0x02, 0x03, 0x01,
+		0x01, 0x01, 0x02, 0x03,
+		0x03, 0x01, 0x01, 0x02
+	} ;
+	State[1] = Mul_F256[0x02][State[0]] + Mul_F256[0x03][State[1]] + Mul_F256[0x01][State[2]] + Mul_F256[0x01][State[3]]
 	int i;
-	for (i = 0; i < 16; i++) {
-		
+	for (i =0; i < 16; i + 4) {
+		int j;
+		for (j = i; j < i + 4; j++) {
+			State[j] = Mul_F256[ref[j]][State[j]] + Mul_F256[ref[j+1]][State[j]+1] + Mul_F256[ref[j+2]][State[j]+2] + Mul_F256[ref[j+3]][State[j]+3];
+		}
 	}
 };
 void AddRoundKey(int r){};
