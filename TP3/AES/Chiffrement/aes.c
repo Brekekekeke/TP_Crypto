@@ -4420,10 +4420,19 @@ uchar State[16] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
   } ;
 */
+/*
 uchar State[16] = {
+	// test SubBytes et SwitchRows
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
     0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
   } ;
+*/
+
+uchar State[16] = {
+	// test MixColum
+	0x0E, 0x09, 0x0D, 0x0B, 0x0B, 0x0E, 0x09, 0x0D,
+	0x0D, 0x0B, 0x0E, 0x09, 0x09, 0x0D, 0x0B, 0x0E
+}  ;
 
 /* Partie à compléter pour ce TP */
 
@@ -4437,7 +4446,8 @@ void SubBytes(){	// Remplace chaque octet State[x] par SBox[x]
 };
 void ShiftRows(){
 	int dimension = 4;
-	uchar before[dimension][dimension]; after[dimension][dimension];
+	uchar before[dimension][dimension];
+	uchar after[dimension][dimension];
 	int i, j;
 	// Remplir before
 	int variable = 0;
@@ -4450,7 +4460,7 @@ void ShiftRows(){
 	// Traiter
 	for (i = 0; i < dimension; i++) {
 		for (j = 0; j < dimension; j++) {
-			after[i][j] = before[i][(i+j)%dimension];
+			after[j][i] = before[(i+j)%dimension][i];
 		}
 	}
 	// Remplir State
@@ -4458,6 +4468,7 @@ void ShiftRows(){
 	for (i = 0; i < dimension; i++) {
 		for (j = 0; j < dimension; j++) {
 			State[variable] = after[i][j];
+			variable++;
 		}
 	}
 	/*
@@ -4476,18 +4487,28 @@ void ShiftRows(){
 	*/
 };
 void MixColumns(){
-	uchar ref[16] = {
-		0x02, 0x03, 0x01, 0x01,
-		0x01, 0x02, 0x03, 0x01,
-		0x01, 0x01, 0x02, 0x03,
-		0x03, 0x01, 0x01, 0x02
+	int i, j, k;
+	uchar ref[4][4] = {
+		{0x02, 0x01, 0x01, 0x03},
+		{0x03, 0x02, 0x01, 0x01},
+		{0x01, 0x03, 0x02, 0x01},
+		{0x01, 0x01, 0x03, 0x02}
 	} ;
-	State[1] = Mul_F256[0x02][State[0]] + Mul_F256[0x03][State[1]] + Mul_F256[0x01][State[2]] + Mul_F256[0x01][State[3]]
-	int i;
-	for (i =0; i < 16; i + 4) {
-		int j;
+	uchar svgState[16];
+	for (i = 0; i < 16; i++) {
+		svgState[i] = State[i];
+		State[i] = 0x00;
+	}
+	for (i = 0; i < 16; i = i + 4) {
 		for (j = i; j < i + 4; j++) {
-			State[j] = Mul_F256[ref[j]][State[j]] + Mul_F256[ref[j+1]][State[j]+1] + Mul_F256[ref[j+2]][State[j]+2] + Mul_F256[ref[j+3]][State[j]+3];
+			//printf("J travaille dans la case %d où on trouve %02X\n", j, svgState[j]);
+			for (k = 0; k < 4; k++) {
+				//printf("  k travaille dans la case %d et multiplie %02X par %02X  puis additionne ce %02X au %02X dans State[%d]",
+				k, svgState[i + k], ref[k] [j%4], Mul_F256[svgState[i + k]] [ref[k] [j%4]], State[j], j);
+				
+				State[j] = State[j] ^ Mul_F256[svgState[i + k]] [ref[k] [j%4]];
+				//printf(" et renvoie %02X\n", State[j]);
+			}
 		}
 	}
 };
@@ -4510,7 +4531,7 @@ void chiffrer(){
 int main (int argc, char * argv[]) {
   printf("Le bloc \"State\" en entrée vaut : \n");
   affiche_bloc_matriciel(State);
-  ShiftRows();
+  MixColumns();
   /*
   chiffrer();
   */
