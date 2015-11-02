@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h> // pour EXIT_SUCCESS
+#include <time.h>
 #include "gmp.h"
 // LG_MAX est la longueur maximale du texte clair (en nombre de caractères ASCII)
 #ifndef LG_MAX
@@ -10,10 +11,46 @@
 #endif
 typedef unsigned char uchar;
 
+
+
 void fabrique(mpz_t clef_publique_n, mpz_t clef_publique_e, mpz_t clef_privee){
   mpz_set_str(clef_publique_n, "196520034100071057065009920573", 10);
+  // trouver deux nombres premiers distincts de 1024 bits
+  gmp_randstate_t rstate;
+  gmp_randinit_default (rstate);
+  // P
+  mpz_t tempP;
+  mpz_urandomb (tempP, rstate, 1024);
+  while (mpz_even_p (tempP) != 0) { // vérification parité
+	  mpz_urandomb (tempP, rstate, 1024);
+  }
+  while (mpz_probab_prime_p(tempP, 25) != 2) { // vérification primalité
+	mpz_urandomb (tempP, rstate, 1024);
+	while (mpz_even_p (tempP) != 0) { // vérification parité
+	  mpz_urandomb (tempP, rstate, 1024);
+	}
+  }
+  // Q
+  mpz_t tempQ;
+  mpz_urandomb (tempQ, rstate, 1024);
+  while (mpz_even_p (tempQ) != 0) { // vérification parité
+	  mpz_urandomb (tempQ, rstate, 1024);
+  }
+  while (mpz_probab_prime_p(tempQ, 25) != 2) { // vérification primalité
+	mpz_urandomb (tempQ, rstate, 1024);
+	while (mpz_even_p (tempQ) != 0) { // vérification parité
+	  mpz_urandomb (tempQ, rstate, 1024);
+	}
+  }
+  // Multiplication P * Q
+  
+  
+  mpz_set_str(clef_publique_n, tempP, 10);
+
   mpz_set_str(clef_publique_e, "7", 10);
   mpz_set_str(clef_privee, "56148581171448620129544540223", 10);
+  
+  
 } // À modifier lors de l'exercice 1
 
 void os2ip (mpz_t x, const uchar *X){
@@ -23,11 +60,12 @@ void os2ip (mpz_t x, const uchar *X){
 
 uchar* i2osp (mpz_t x){
   uchar *X = malloc(LG_MAX * sizeof(char));
-  sprintf(X, "Alfred"); // À modifier lors de l'exercice 3
+  //sprintf(X, "Alfred"); // À modifier lors de l'exercice 3
   return X;
 } // Décodez ici le code message r et retournez le texte correspondant.
 
 int main(){
+  srand(time(NULL));
   const uchar message[LG_MAX] = "Alfred"; // C'est le message ASCII à chiffrer
   uchar *message_dechiffre;
   /* Déclaration et initialisation des variables GMP */
@@ -45,7 +83,7 @@ int main(){
   gmp_printf("Clef publique (e) : %Zd\n", clef_publique_e);
   gmp_printf("Clef privee (d)   : %Zd\n", clef_privee);
 
-  printf("Message de %d caractères : \"%s\"", strlen(message), message);
+  //printf("Message de %d caractères : \"%s\"", strlen(message), message);
   os2ip (code_message, message);     // Codage <----------------------------- Exercice 2
   gmp_printf(" -> %Zd\n", code_message);
   
